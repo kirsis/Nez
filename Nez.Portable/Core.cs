@@ -149,7 +149,8 @@ namespace Nez
 				SynchronizeWithVerticalRetrace = true
 			};
 			graphicsManager.DeviceReset += OnGraphicsDeviceReset;
-			graphicsManager.PreferredDepthStencilFormat = DepthFormat.Depth24Stencil8;
+			// TODO: JKI SUBMIT A PR/DESCRIPTION ABOUT THIS
+			graphicsManager.PreferredDepthStencilFormat = DepthFormat.Depth24;// Stencil8;
 
 			Screen.Initialize(graphicsManager);
 			Window.ClientSizeChanged += OnGraphicsDeviceReset;
