@@ -78,12 +78,12 @@ namespace Nez.DeferredLighting
 			if (Direction.Y > 0)
 				root.Y = 10f;
 			else
-				root.Y = Screen.Height - 10;
+				root.Y = Screen.RenderHeight - 10;
 
 			if (Direction.X > 0)
 				root.X = 10;
 			else
-				root.X = Screen.Width - 10;
+				root.X = Screen.RenderWidth - 10;
 
 			var angle = Mathf.Atan2(Direction.Y, Direction.X);
 			batcher.DrawLineAngle(root, angle, 100, Color.Red, 3);

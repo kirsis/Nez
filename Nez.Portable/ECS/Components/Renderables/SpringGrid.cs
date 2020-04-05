@@ -144,7 +144,7 @@ namespace Nez
 		Vector2 _screenSize;
 
 
-		public SpringGrid() : this(new Rectangle(0, 0, Screen.Width, Screen.Height), new Vector2(30))
+		public SpringGrid() : this(new Rectangle(0, 0, Screen.RenderWidth, Screen.RenderHeight), new Vector2(30))
 		{ }
 
 		public SpringGrid(Rectangle gridSize, Vector2 spacing)
@@ -311,8 +311,8 @@ namespace Nez
 
 		public virtual void Update()
 		{
-			_screenSize.X = Screen.Width;
-			_screenSize.Y = Screen.Height;
+			_screenSize.X = Screen.RenderWidth;
+			_screenSize.Y = Screen.RenderHeight;
 
 			foreach (var spring in _springs)
 				spring.Update();

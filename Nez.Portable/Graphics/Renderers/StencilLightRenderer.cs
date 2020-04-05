@@ -149,8 +149,8 @@ namespace Nez
 					Debug.DrawLine(vertex, nextVertex, Color.Green);
 					Debug.DrawLine(midpoint, midpoint + normal * 20, Color.Green);
 
-					var point1 = nextVertex + (Vector2.Normalize(nextVertex - lightPos) * Screen.Width);
-					var point2 = vertex + (Vector2.Normalize(vertex - lightPos) * Screen.Width);
+					var point1 = nextVertex + (Vector2.Normalize(nextVertex - lightPos) * Screen.RenderWidth);
+					var point2 = vertex + (Vector2.Normalize(vertex - lightPos) * Screen.RenderWidth);
 
 					var poly = new Vector2[] { nextVertex, point1, point2, vertex };
 					_vertBuffer[0] = nextVertex;

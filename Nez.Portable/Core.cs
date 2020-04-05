@@ -90,6 +90,7 @@ namespace Nez
 		TimeSpan _frameCounterElapsedTime = TimeSpan.Zero;
 		int _frameCounter = 0;
 		string _windowTitle;
+		private readonly float _displayScale;
 #endif
 
 		Scene _scene;
@@ -132,19 +133,22 @@ namespace Nez
 		}
 
 
-		public Core(int width = 1280, int height = 720, bool isFullScreen = false, string windowTitle = "Nez", string contentDirectory = "Content")
+		public Core(int width = 1280, int height = 720, float displayScale = 1.0f, bool isFullScreen = false, bool enableEntitySystems = true,
+		            string windowTitle = "Nez", string contentDirectory = "Content")
 		{
 #if DEBUG
 			_windowTitle = windowTitle;
 #endif
+
+			_displayScale = displayScale;
 
 			_instance = this;
 			Emitter = new Emitter<CoreEvents>(new CoreEventsComparer());
 
 			var graphicsManager = new GraphicsDeviceManager(this)
 			{
-				PreferredBackBufferWidth = width,
-				PreferredBackBufferHeight = height,
+				PreferredBackBufferWidth = (int)(width * _displayScale),
+				PreferredBackBufferHeight = (int)(height * _displayScale),
 				IsFullScreen = isFullScreen,
 				SynchronizeWithVerticalRetrace = true
 			};
@@ -152,7 +156,7 @@ namespace Nez
 			// TODO: JKI SUBMIT A PR/DESCRIPTION ABOUT THIS
 			graphicsManager.PreferredDepthStencilFormat = DepthFormat.Depth24;// Stencil8;
 
-			Screen.Initialize(graphicsManager);
+			Screen.Initialize(graphicsManager, width, height, _displayScale);
 			Window.ClientSizeChanged += OnGraphicsDeviceReset;
 			Window.OrientationChanged += OnOrientationChanged;
 

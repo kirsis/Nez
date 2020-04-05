@@ -55,7 +55,7 @@ namespace Nez
 
 		void OnGraphicsDeviceReset()
 		{
-			_scrollPane.SetHeight(Screen.Height);
+			_scrollPane.SetHeight(Screen.RenderHeight);
 		}
 
 
@@ -153,7 +153,7 @@ namespace Nez
 
 			// force a validate which will layout the ScrollPane and populate the proper scrollBarWidth
 			_scrollPane.Validate();
-			_scrollPane.SetSize(295 + _scrollPane.GetScrollBarWidth(), Screen.Height);
+			_scrollPane.SetSize(295 + _scrollPane.GetScrollBarWidth(), Screen.RenderHeight);
 		}
 
 

@@ -37,7 +37,7 @@ namespace Nez.Textures
 		/// </summary>
 		public RenderTexture()
 		{
-			RenderTarget = Textures.RenderTarget.Create(Screen.Width, Screen.Height, Screen.BackBufferFormat,
+			RenderTarget = Textures.RenderTarget.Create(Screen.RenderWidth, Screen.RenderHeight, Screen.BackBufferFormat,
 				Screen.PreferredDepthStencilFormat);
 		}
 
@@ -48,7 +48,7 @@ namespace Nez.Textures
 		/// <param name="preferredDepthFormat">Preferred depth format.</param>
 		public RenderTexture(DepthFormat preferredDepthFormat)
 		{
-			RenderTarget = Textures.RenderTarget.Create(Screen.Width, Screen.Height, Screen.BackBufferFormat,
+			RenderTarget = Textures.RenderTarget.Create(Screen.RenderWidth, Screen.RenderHeight, Screen.BackBufferFormat,
 				preferredDepthFormat);
 		}
 
@@ -108,7 +108,7 @@ namespace Nez.Textures
 					Resize(newWidth, newHeight);
 					break;
 				case RenderTextureResizeBehavior.SizeToScreen:
-					Resize(Screen.Width, Screen.Height);
+					Resize(Screen.RenderWidth, Screen.RenderHeight);
 					break;
 			}
 		}
@@ -119,7 +119,7 @@ namespace Nez.Textures
 		/// </summary>
 		public void ResizeToFitBackbuffer()
 		{
-			Resize(Screen.Width, Screen.Height);
+			Resize(Screen.RenderWidth, Screen.RenderHeight);
 		}
 
 

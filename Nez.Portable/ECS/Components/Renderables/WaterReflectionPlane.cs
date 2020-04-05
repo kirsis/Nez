@@ -28,7 +28,7 @@ namespace Nez
 		WaterReflectionMaterial _waterReflectionMaterial;
 
 
-		public WaterReflectionPlane() : this(Screen.Width, Screen.Height)
+		public WaterReflectionPlane() : this(Screen.RenderWidth, Screen.RenderHeight)
 		{
 		}
 

@@ -29,7 +29,7 @@ namespace Nez
 		public static class Size
 		{
 			public static int LineSizeMultiplier =>
-				System.Math.Max(Mathf.CeilToInt((float) Core.Scene.SceneRenderTargetSize.X / Screen.Width),
+				System.Math.Max(Mathf.CeilToInt((float) Core.Scene.SceneRenderTargetSize.X / Screen.RenderWidth),
 					1);
 		}
 	}

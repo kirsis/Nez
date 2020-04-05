@@ -86,8 +86,8 @@ namespace Nez
 
 		public ImageMaskTransition(Func<Scene> sceneLoadAction, Texture2D maskTexture) : base(sceneLoadAction, true)
 		{
-			_maskPosition = new Vector2(Screen.Width / 2, Screen.Height / 2);
-			_maskRenderTarget = new RenderTarget2D(Core.GraphicsDevice, Screen.Width, Screen.Height, false,
+			_maskPosition = new Vector2(Screen.RenderWidth / 2, Screen.RenderHeight / 2);
+			_maskRenderTarget = new RenderTarget2D(Core.GraphicsDevice, Screen.RenderWidth, Screen.RenderHeight, false,
 				SurfaceFormat.Color, DepthFormat.None);
 			_maskTexture = maskTexture;
 			_maskOrigin = new Vector2(_maskTexture.Bounds.Width / 2, _maskTexture.Bounds.Height / 2);

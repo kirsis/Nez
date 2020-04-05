@@ -70,7 +70,7 @@ namespace Nez
 
 			_verticalSizeParam.SetValue(_verticalSize);
 			_horizontalOffsetParam.SetValue(_horizontalOffset);
-			_screenSizeParam.SetValue(new Vector2(Screen.Width, Screen.Height));
+			_screenSizeParam.SetValue(new Vector2(Screen.RenderWidth, Screen.RenderHeight));
 		}
 
 		public override void Unload()

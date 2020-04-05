@@ -69,7 +69,7 @@ namespace Nez
 			SquareColor = Color.Black;
 			Smoothness = 0.5f;
 
-			var aspectRatio = (float) Screen.Width / (float) Screen.Height;
+			var aspectRatio = (float) Screen.RenderWidth / (float) Screen.RenderHeight;
 			Size = new Vector2(30, 30 / aspectRatio);
 		}
 
@@ -118,7 +118,7 @@ namespace Nez
 			if (!_isNewSceneLoaded)
 				batcher.Draw(PreviousSceneRender, _destinationRect, Color.White);
 			else
-				batcher.Draw(_overlayTexture, new Rectangle(0, 0, Screen.Width, Screen.Height), Color.Transparent);
+				batcher.Draw(_overlayTexture, new Rectangle(0, 0, Screen.RenderWidth, Screen.RenderHeight), Color.Transparent);
 
 			batcher.End();
 		}

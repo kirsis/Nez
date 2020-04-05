@@ -48,39 +48,39 @@ namespace Nez
 			switch (transitionType)
 			{
 				case TransformTransitionType.ZoomOut:
-					_finalRenderRect = new Rectangle(Screen.Width / 2, Screen.Height / 2, 0, 0);
+					_finalRenderRect = new Rectangle(Screen.RenderWidth / 2, Screen.RenderHeight / 2, 0, 0);
 					break;
 				case TransformTransitionType.ZoomIn:
-					_finalRenderRect = new Rectangle(-Screen.Width * 5, -Screen.Height * 5, _destinationRect.Width * 10,
+					_finalRenderRect = new Rectangle(-Screen.RenderWidth * 5, -Screen.RenderHeight * 5, _destinationRect.Width * 10,
 						_destinationRect.Height * 10);
 					break;
 				case TransformTransitionType.SlideRight:
-					_finalRenderRect = new Rectangle(Screen.Width, 0, _destinationRect.Width, _destinationRect.Height);
+					_finalRenderRect = new Rectangle(Screen.RenderWidth, 0, _destinationRect.Width, _destinationRect.Height);
 					break;
 				case TransformTransitionType.SlideLeft:
-					_finalRenderRect = new Rectangle(-Screen.Width, 0, _destinationRect.Width, _destinationRect.Height);
+					_finalRenderRect = new Rectangle(-Screen.RenderWidth, 0, _destinationRect.Width, _destinationRect.Height);
 					break;
 				case TransformTransitionType.SlideUp:
 					_finalRenderRect =
-						new Rectangle(0, -Screen.Height, _destinationRect.Width, _destinationRect.Height);
+						new Rectangle(0, -Screen.RenderHeight, _destinationRect.Width, _destinationRect.Height);
 					break;
 				case TransformTransitionType.SlideDown:
-					_finalRenderRect = new Rectangle(0, Screen.Height, _destinationRect.Width, _destinationRect.Height);
+					_finalRenderRect = new Rectangle(0, Screen.RenderHeight, _destinationRect.Width, _destinationRect.Height);
 					break;
 				case TransformTransitionType.SlideBottomRight:
-					_finalRenderRect = new Rectangle(Screen.Width, Screen.Height, _destinationRect.Width,
+					_finalRenderRect = new Rectangle(Screen.RenderWidth, Screen.RenderHeight, _destinationRect.Width,
 						_destinationRect.Height);
 					break;
 				case TransformTransitionType.SlideBottomLeft:
-					_finalRenderRect = new Rectangle(-Screen.Width, Screen.Height, _destinationRect.Width,
+					_finalRenderRect = new Rectangle(-Screen.RenderWidth, Screen.RenderHeight, _destinationRect.Width,
 						_destinationRect.Height);
 					break;
 				case TransformTransitionType.SlideTopRight:
-					_finalRenderRect = new Rectangle(Screen.Width, -Screen.Height, _destinationRect.Width,
+					_finalRenderRect = new Rectangle(Screen.RenderWidth, -Screen.RenderHeight, _destinationRect.Width,
 						_destinationRect.Height);
 					break;
 				case TransformTransitionType.SlideTopLeft:
-					_finalRenderRect = new Rectangle(-Screen.Width, -Screen.Height, _destinationRect.Width,
+					_finalRenderRect = new Rectangle(-Screen.RenderWidth, -Screen.RenderHeight, _destinationRect.Width,
 						_destinationRect.Height);
 					break;
 			}

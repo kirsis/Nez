@@ -109,7 +109,7 @@ namespace Nez.Textures
 		/// </summary>
 		public static RenderTarget2D Create()
 		{
-			return Create(Screen.Width, Screen.Height, Screen.BackBufferFormat, Screen.PreferredDepthStencilFormat);
+			return Create(Screen.RenderWidth, Screen.RenderHeight, Screen.BackBufferFormat, Screen.PreferredDepthStencilFormat);
 		}
 
 
@@ -119,7 +119,7 @@ namespace Nez.Textures
 		/// <param name="preferredDepthFormat">Preferred depth format.</param>
 		public static RenderTarget2D Create(DepthFormat preferredDepthFormat)
 		{
-			return Create(Screen.Width, Screen.Height, Screen.BackBufferFormat, preferredDepthFormat);
+			return Create(Screen.RenderWidth, Screen.RenderHeight, Screen.BackBufferFormat, preferredDepthFormat);
 		}
 
 

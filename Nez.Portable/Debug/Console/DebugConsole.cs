@@ -514,8 +514,8 @@ namespace Nez.Console
 			if (!IsOpen)
 				return;
 
-			var screenWidth = Screen.Width;
-			var screenHeight = Screen.Height;
+			var screenWidth = Screen.RenderWidth;
+			var screenHeight = Screen.RenderHeight;
 			var workingWidth = screenWidth - 2 * HORIZONTAL_PADDING;
 
 			Graphics.Instance.Batcher.Begin();

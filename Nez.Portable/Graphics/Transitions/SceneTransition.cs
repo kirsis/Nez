@@ -96,7 +96,7 @@ namespace Nez
 
 			// create a RenderTarget if we need to for later
 			if (wantsPreviousSceneRender)
-				PreviousSceneRender = new RenderTarget2D(Core.GraphicsDevice, Screen.Width, Screen.Height, false,
+				PreviousSceneRender = new RenderTarget2D(Core.GraphicsDevice, Screen.RenderWidth, Screen.RenderHeight, false,
 					Screen.BackBufferFormat, DepthFormat.None, 0, RenderTargetUsage.PreserveContents);
 		}
 

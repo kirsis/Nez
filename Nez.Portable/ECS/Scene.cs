@@ -553,7 +553,7 @@ namespace Nez
 		void UpdateResolutionScaler()
 		{
 			var designSize = _designResolutionSize;
-			var screenSize = new Point(Screen.Width, Screen.Height);
+			var screenSize = new Point(Screen.RenderWidth, Screen.RenderHeight);
 			var screenAspectRatio = (float) screenSize.X / (float) screenSize.Y;
 
 			var renderTargetWidth = screenSize.X;
