@@ -42,8 +42,8 @@ namespace Nez.UI
 		// configuration
 		LabelStyle _style;
 		string _text;
-		float _fontScaleX = 1;
-		float _fontScaleY = 1;
+		float _fontScaleX = Screen._displayScale;
+		float _fontScaleY = Screen._displayScale;
 
 		int labelAlign = AlignInternal.Left;
 
@@ -216,17 +216,15 @@ namespace Nez.UI
 
 		public Label SetFontScale(float fontScale)
 		{
-			_fontScaleX = fontScale;
-			_fontScaleY = fontScale;
-			InvalidateHierarchy();
+			this.SetFontScale(fontScale, fontScale);
 			return this;
 		}
 
 
 		public Label SetFontScale(float fontScaleX, float fontScaleY)
 		{
-			_fontScaleX = fontScaleX;
-			_fontScaleY = fontScaleY;
+			_fontScaleX = fontScaleX * Screen._displayScale;
+			_fontScaleY = fontScaleY * Screen._displayScale;
 			InvalidateHierarchy();
 			return this;
 		}
