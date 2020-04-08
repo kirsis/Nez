@@ -5,7 +5,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Nez.UI
 {
-	public class Label : Element
+	public class Label : Element, ILabel
 	{
 		public override float PreferredWidth
 		{
@@ -80,6 +80,10 @@ namespace Nez.UI
 
 
 		public Label(string text) : this(text, Graphics.Instance.BitmapFont)
+		{ }
+
+
+		public Label() : this(string.Empty)
 		{ }
 
 
@@ -358,6 +362,21 @@ namespace Nez.UI
 
 			batcher.DrawString(_style.Font, _wrappedString, new Vector2(x, y) + _textPosition,
 				_style.FontColor, 0, Vector2.Zero, new Vector2(_fontScaleX, _fontScaleY), SpriteEffects.None, 0);
+		}
+
+		ILabel ILabel.SetText(string text)
+		{
+			return this.SetText(text);
+		}
+
+		ILabel ILabel.SetStyle(LabelStyle labelStyle)
+		{
+			return this.SetStyle(labelStyle);
+		}
+
+		ILabel ILabel.SetAlignment(Align alignment)
+		{;
+			return this.SetAlignment(alignment);
 		}
 	}
 

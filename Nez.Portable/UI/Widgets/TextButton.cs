@@ -5,28 +5,31 @@ using Microsoft.Xna.Framework;
 
 namespace Nez.UI
 {
-	public class TextButton : Button
+	public class TextButton : TextButton<Label>
 	{
-		Label label;
+		public TextButton(string text, TextButtonStyle style) : base(new Label(text, style.Font, style.FontColor), style)
+		{
+		}
+
+		public TextButton(string text, Skin skin, string styleName = null) : this(text, skin.Get<TextButtonStyle>(styleName))
+		{
+		}
+	}
+
+	public class TextButton<T> : Button
+		where T : Element, ILabel
+	{
+		T label;
 		TextButtonStyle style;
 
-
-		public TextButton(string text, TextButtonStyle style) : base(style)
+		public TextButton(T label, TextButtonStyle style) : base(style)
 		{
 			SetStyle(style);
-			label = new Label(text, style.Font, style.FontColor);
+			this.label = label;
 			label.SetAlignment(UI.Align.Center);
-
 			Add(label).Expand().Fill();
 			SetSize(PreferredWidth, PreferredHeight);
 		}
-
-
-		public TextButton(string text, Skin skin, string styleName = null) : this(text,
-			skin.Get<TextButtonStyle>(styleName))
-		{
-		}
-
 
 		public override void SetStyle(ButtonStyle style)
 		{
@@ -55,6 +58,7 @@ namespace Nez.UI
 		public override void Draw(Batcher batcher, float parentAlpha)
 		{
 			Color? fontColor = null;
+			System.Diagnostics.Debug.WriteLine($"Mouse over {this.label.GetText()}: {_mouseOver}");
 			if (_isDisabled && style.DisabledFontColor.HasValue)
 				fontColor = style.DisabledFontColor;
 			else if (_mouseDown && style.DownFontColor.HasValue)
@@ -77,7 +81,7 @@ namespace Nez.UI
 		}
 
 
-		public Label GetLabel()
+		public T GetLabel()
 		{
 			return label;
 		}
@@ -89,7 +93,7 @@ namespace Nez.UI
 		}
 
 
-		public TextButton SetText(String text)
+		public TextButton<T> SetText(String text)
 		{
 			label.SetText(text);
 			return this;

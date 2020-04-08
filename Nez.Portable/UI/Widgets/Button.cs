@@ -340,7 +340,7 @@ namespace Nez.UI
 
 			for (var i = 0; i < children.Count; i++)
 				children[i].MoveBy(offsetX, offsetY);
-
+			
 			base.Draw(batcher, parentAlpha);
 
 			for (int i = 0; i < children.Count; i++)

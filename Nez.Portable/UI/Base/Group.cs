@@ -153,6 +153,7 @@ namespace Nez.UI
 
 			Validate();
 
+			
 			if (transform)
 				ApplyTransform(batcher, ComputeTransform());
 

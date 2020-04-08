@@ -128,6 +128,7 @@ namespace Nez.UI
 		public override void Draw(Batcher batcher, float parentAlpha)
 		{
 			Validate();
+			
 			if (transform)
 			{
 				ApplyTransform(batcher, ComputeTransform());
@@ -154,6 +155,7 @@ namespace Nez.UI
 			else
 			{
 				DrawBackground(batcher, parentAlpha, x, y);
+				
 				base.Draw(batcher, parentAlpha);
 			}
 		}
