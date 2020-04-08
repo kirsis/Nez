@@ -104,7 +104,7 @@ namespace Nez
 		public static Vector2 ScaledPosition(Vector2 position)
 		{
 			var scaledPos = new Vector2(position.X - _resolutionOffset.X, position.Y - _resolutionOffset.Y);
-			return scaledPos * _resolutionScale;
+			return scaledPos * _resolutionScale * Screen._displayScale;
 		}
 
 		/// <summary>
@@ -355,7 +355,7 @@ namespace Nez
 			{
 				var pastPos = new Vector2(_previousMouseState.X - _resolutionOffset.X,
 					_previousMouseState.Y - _resolutionOffset.Y);
-				pastPos *= _resolutionScale;
+				pastPos *= (_resolutionScale * Screen._displayScale);
 				return ScaledMousePosition - pastPos;
 			}
 		}
