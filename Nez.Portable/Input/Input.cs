@@ -103,8 +103,11 @@ namespace Nez
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static Vector2 ScaledPosition(Vector2 position)
 		{
+			// JKI: if macOS, then need displayScale. If iOS, then need to remove...
+			// So INPUT should already take display scale into account at this point
 			var scaledPos = new Vector2(position.X - _resolutionOffset.X, position.Y - _resolutionOffset.Y);
-			return scaledPos * _resolutionScale * Screen._displayScale;
+			//var scaledPos = new Vector2(position.X * Screen._displayScale - _resolutionOffset.X, position.Y * Screen._displayScale - _resolutionOffset.Y);
+			return scaledPos * _resolutionScale;
 		}
 
 		/// <summary>

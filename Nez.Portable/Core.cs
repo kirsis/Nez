@@ -158,7 +158,7 @@ namespace Nez
 			
 			graphicsManager.PreferredDepthStencilFormat = DepthFormat.Depth24;// Stencil8;
 
-			Screen.Initialize(graphicsManager, width, height, _displayScaleHint);
+			Screen.Initialize(graphicsManager, _displayScaleHint);
 			Window.ClientSizeChanged += OnGraphicsDeviceReset;
 			Window.OrientationChanged += OnOrientationChanged;
 

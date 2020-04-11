@@ -8,17 +8,11 @@ namespace Nez
 	{
 		static internal GraphicsDeviceManager _graphicsManager;
 		static internal float _displayScale;
-		static int _requestedWidth;
-		static int _requestedHeight;
-		private static int _requestedPreferredWidth;
-		private static int _requestedPreferredHeight;
-
-		internal static void Initialize(GraphicsDeviceManager graphicsManager, int width, int height, float displayScale) {
+		
+		internal static void Initialize(GraphicsDeviceManager graphicsManager, float displayScale) {
 			_graphicsManager = graphicsManager;
-			_requestedWidth = width;//_graphicsManager.GraphicsDevice.PresentationParameters.BackBufferWidth;
-			_requestedHeight = height;//_graphicsManager.GraphicsDevice.PresentationParameters.BackBufferHeight;
 			_displayScale = displayScale;
-	}
+		}
 
 		/// <summary>
 		/// Logical width of the Screen
@@ -26,10 +20,9 @@ namespace Nez
 		/// <value>The width.</value>
 		public static int LogicalWidth
 		{
-			get => _requestedWidth;
+			get => (int)(_graphicsManager.GraphicsDevice.PresentationParameters.BackBufferWidth / _displayScale);
 			set
 			{
-				_requestedWidth = value;
 				_graphicsManager.GraphicsDevice.PresentationParameters.BackBufferWidth = (int)(value * _displayScale);
 			}
 		}
@@ -40,10 +33,9 @@ namespace Nez
 		/// <value>The height.</value>
 		public static int LogicalHeight
 		{
-			get => _requestedHeight;
+			get => (int)(_graphicsManager.GraphicsDevice.PresentationParameters.BackBufferHeight / _displayScale);
 			set
 			{
-				_requestedHeight = value;
 				_graphicsManager.GraphicsDevice.PresentationParameters.BackBufferHeight = (int)(value * _displayScale);
 			}
 		}
@@ -57,7 +49,6 @@ namespace Nez
 			get => _graphicsManager.GraphicsDevice.PresentationParameters.BackBufferWidth;
 			set
 			{
-				_requestedWidth = (int)(value / _displayScale);
 				_graphicsManager.GraphicsDevice.PresentationParameters.BackBufferWidth = value;
 			}
 		}
@@ -71,7 +62,6 @@ namespace Nez
 			get => _graphicsManager.GraphicsDevice.PresentationParameters.BackBufferHeight;
 			set
 			{
-				_requestedHeight = (int)(value / _displayScale);
 				_graphicsManager.GraphicsDevice.PresentationParameters.BackBufferHeight = value;
 			}
 		}
@@ -91,26 +81,23 @@ namespace Nez
 
 		public static int PreferredBackBufferWidth
 		{
-			get => _requestedPreferredWidth;
+			get => _graphicsManager.PreferredBackBufferWidth;
 			set
 			{
-				_requestedPreferredWidth = value;
-				_graphicsManager.PreferredBackBufferWidth = (int)(value * _displayScale);
+				_graphicsManager.PreferredBackBufferWidth = value;
 			}
 		}
 
 		public static int PreferredBackBufferHeight
 		{
-			get => _requestedPreferredHeight;
+			get => _graphicsManager.PreferredBackBufferHeight;
 			set
 			{
-				_requestedPreferredHeight = value;
-				_graphicsManager.PreferredBackBufferHeight = (int)(value * _displayScale);
+				_graphicsManager.PreferredBackBufferHeight = value;
 			}
 		}
 
 		public static int LogicalMonitorWidth => GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;
-
 		public static int LogicalMonitorHeight => GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height;
 
 		public static SurfaceFormat BackBufferFormat =>
@@ -147,7 +134,9 @@ namespace Nez
 			set => _graphicsManager.SupportedOrientations = value;
 		}
 
-		public static void ApplyChanges() => _graphicsManager.ApplyChanges();
+		public static void ApplyChanges() {
+			_graphicsManager.ApplyChanges();
+		}
 
 		/// <summary>
 		/// sets the preferredBackBuffer then applies the changes
@@ -156,8 +145,8 @@ namespace Nez
 		/// <param name="height">Height.</param>
 		public static void SetSize(int width, int height)
 		{
-			PreferredBackBufferWidth = width;
-			PreferredBackBufferHeight = height;
+			PreferredBackBufferWidth = (int)(width * _displayScale);
+			PreferredBackBufferHeight = (int)(height * _displayScale);
 			ApplyChanges();
 		}
 	}
