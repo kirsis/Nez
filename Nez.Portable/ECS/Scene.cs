@@ -723,7 +723,7 @@ namespace Nez
 			if (_sceneRenderTarget != null)
 				_sceneRenderTarget.Dispose();
 			_sceneRenderTarget = RenderTarget.Create(renderTargetWidth, renderTargetHeight);
-
+			
 			// only create the destinationRenderTarget if it already exists, which would indicate we have PostProcessors
 			if (_destinationRenderTarget != null)
 			{

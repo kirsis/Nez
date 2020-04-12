@@ -516,11 +516,14 @@ namespace Nez.UI
 			if (pad == null)
 				throw new Exception("pad cannot be null.");
 
+			InvalidateHierarchy();
+
 			_padTop = pad;
 			_padLeft = pad;
 			_padBottom = pad;
 			_padRight = pad;
 			_sizeInvalid = true;
+			
 
 			return this;
 		}
