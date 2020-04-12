@@ -196,7 +196,6 @@ namespace Nez.UI
 
 			var inputPos = ScreenToStageCoordinates(currentMousePosition);
 
-			System.Diagnostics.Debug.WriteLine($"Stage pos: {inputPos.X}");
 			UpdateInputPoint(inputPos, Input.LeftMouseButtonPressed, Input.LeftMouseButtonReleased,
 				mouseMoved, ref _mouseOverElement);
 		}

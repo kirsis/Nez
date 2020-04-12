@@ -58,7 +58,7 @@ namespace Nez.UI
 		public override void Draw(Batcher batcher, float parentAlpha)
 		{
 			Color? fontColor = null;
-			System.Diagnostics.Debug.WriteLine($"Mouse over {this.label.GetText()}: {_mouseOver}");
+
 			if (_isDisabled && style.DisabledFontColor.HasValue)
 				fontColor = style.DisabledFontColor;
 			else if (_mouseDown && style.DownFontColor.HasValue)
