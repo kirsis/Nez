@@ -38,6 +38,8 @@ namespace Nez.UI
 			}
 		}
 
+		public Element Element => this;
+
 
 		// configuration
 		LabelStyle _style;
@@ -375,8 +377,13 @@ namespace Nez.UI
 		}
 
 		ILabel ILabel.SetAlignment(Align alignment)
-		{;
+		{
 			return this.SetAlignment(alignment);
+		}
+
+		ILabel ILabel.SetFontColor(Color color)
+		{
+			throw new System.NotImplementedException();
 		}
 	}
 
