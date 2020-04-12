@@ -177,7 +177,7 @@ namespace Nez.UI
         /// </summary>
         /// <param name="x">The x coordinate.</param>
         /// <param name="y">The y coordinate.</param>
-        public Element SetPosition(float x, float y)
+        public virtual Element SetPosition(float x, float y)
         {
             if (this.x != x || this.y != y)
             {
@@ -591,10 +591,7 @@ namespace Nez.UI
                     parentCoords.X = (parentCoords.X - x - originX) / scaleX + originX;
                     parentCoords.Y = (parentCoords.Y - y - originY) / scaleY + originY;
                 }
-
-                (this as TextButton<Label>)?.SetText($"{origX} to {parentCoords.X}");
-                //(this as TextButton<UnicodeLabel>)?.SetText($"{origX} to {parentCoords.X}");
-            }
+			}
             else
             {
                 var cos = Mathf.Cos(MathHelper.ToRadians(rotation));
