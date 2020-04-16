@@ -518,7 +518,7 @@ namespace Nez.UI
         /// <summary>
         /// Transforms the specified point in screen coordinates to the element's local coordinate system
         /// </summary>
-        /// <returns>The to local coordinates.</returns>
+        /// <returns>The local coordinates.</returns>
         /// <param name="screenCoords">Screen coords.</param>
         public Vector2 ScreenToLocalCoordinates(Vector2 screenCoords)
         {
@@ -526,6 +526,21 @@ namespace Nez.UI
                 return screenCoords;
 
             return StageToLocalCoordinates(_stage.ScreenToStageCoordinates(screenCoords));
+        }
+
+        /// <summary>
+        /// Transforms the specified point in screen coordinates from the element's local coordinate system
+		/// to screen coordinates.
+        /// </summary>
+        /// <returns>The screen coordinates.</returns>
+        /// <param name="localCoords">Local coords.</param>
+        public Vector2 LocalToScreenCoordinates(Vector2 localCoords)
+        {
+            if (_stage == null)
+                return localCoords;
+
+            var stageCoords = LocalToStageCoordinates(localCoords);
+            return _stage.StageToScreenCoordinates(stageCoords);
         }
 
         /// <summary>
@@ -612,22 +627,19 @@ namespace Nez.UI
         /// <param name="localCoords">Local coords.</param>
         public Vector2 LocalToParentCoordinates(Vector2 localCoords)
         {
-            var actualScaleX = scaleX * Screen._displayScale;
-            var actualScaleY = scaleY * Screen._displayScale;
-
-            var rotation = -this.rotation;
+			var rotation = -this.rotation;
 
             if (rotation == 0)
             {
-                if (actualScaleX == 1 && actualScaleY == 1)
+                if (scaleX == 1 && scaleY == 1)
                 {
                     localCoords.X += x;
                     localCoords.Y += y;
                 }
                 else
                 {
-                    localCoords.X = (localCoords.X - originX) * actualScaleX + originX + x;
-                    localCoords.Y = (localCoords.Y - originY) * actualScaleY + originY + y;
+                    localCoords.X = (localCoords.X - originX) * scaleX + originX + x;
+                    localCoords.Y = (localCoords.Y - originY) * scaleY + originY + y;
                 }
             }
             else
@@ -635,8 +647,8 @@ namespace Nez.UI
                 var cos = Mathf.Cos(MathHelper.ToRadians(rotation));
                 var sin = Mathf.Sin(MathHelper.ToRadians(rotation));
 
-                var tox = (localCoords.X - originX) * actualScaleX;
-                var toy = (localCoords.Y - originY) * actualScaleY;
+                var tox = (localCoords.X - originX) * scaleX;
+                var toy = (localCoords.Y - originY) * scaleY;
                 localCoords.X = (tox * cos + toy * sin) + originX + x;
                 localCoords.Y = (tox * -sin + toy * cos) + originY + y;
             }
