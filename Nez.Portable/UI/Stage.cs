@@ -1,14 +1,28 @@
 ﻿using Microsoft.Xna.Framework;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework.Input;
-
+using System;
+using Nez.Systems;
+using System.Linq;
 
 namespace Nez.UI
 {
+	public struct StageEvent
+	{
+		public Element? Element;
+	}
+
+	public enum StageEventType
+	{
+		FocusGained,
+		FocusLost,
+	}
+
 	public class Stage
 	{
 		public static bool Debug;
 		public Entity Entity;
+		public readonly Emitter<StageEventType, StageEvent> Emitter = new Emitter<StageEventType, StageEvent>();
 
 		/// <summary>
 		/// if true, the rawMousePosition will be used else the scaledMousePosition will be used. If your UI is in screen space
@@ -362,6 +376,20 @@ namespace Nez.UI
 
 			var currentPressedKeys = Input.CurrentKeyboardState.GetPressedKeys();
 
+			var inputStringBuffer = Input.SwapStringBuffer();
+			if (inputStringBuffer.Contains("\b"))
+			{
+				var replacementKeys = new List<Keys>(currentPressedKeys);
+				replacementKeys.AddIfNotPresent(Keys.Back);
+				currentPressedKeys = replacementKeys.ToArray();
+
+				inputStringBuffer = inputStringBuffer.Where(x => x != "\b").ToList();
+			}
+			if (inputStringBuffer.Count > 0)
+			{
+				_keyboardFocusElement.NewCharactersAvailable(inputStringBuffer);
+			}
+
 			// keys down
 			for (var i = 0; i < currentPressedKeys.Length; i++)
 			{
@@ -378,18 +406,22 @@ namespace Nez.UI
 						{
 							ClearKeyRepeatTimer();
 							_keyboardFocusElement.KeyPressed(key, c.Value);
+						}
 
-							// if we dont have a control key pressed setup a repeat timer for the key
-							if (!InputUtils.IsControlDown())
+
+						// if we dont have a control key pressed setup a repeat timer for the key
+						if (!InputUtils.IsControlDown())
+						{
+							_repeatKey = key;
+							_keyRepeatTimer = Core.Schedule(_keyRepeatTime, true, this, t =>
 							{
-								_repeatKey = key;
-								_keyRepeatTimer = Core.Schedule(_keyRepeatTime, true, this, t =>
+								var self = t.Context as Stage;
+								var repeatKeyChar = _repeatKey.GetChar();
+								if (repeatKeyChar != null)
 								{
-									var self = t.Context as Stage;
-									if (self._keyboardFocusElement != null)
-										self._keyboardFocusElement.KeyPressed(_repeatKey, _repeatKey.GetChar().Value);
-								});
-							}
+									self?._keyboardFocusElement?.KeyPressed(_repeatKey, repeatKeyChar.Value);
+								}
+							});
 						}
 					}
 				}
@@ -646,11 +678,27 @@ namespace Nez.UI
 
 			var oldKeyboardFocus = _keyboardFocusElement;
 			if (oldKeyboardFocus != null)
+			{
 				oldKeyboardFocus.LostFocus();
+				this.OnLostFocus(oldKeyboardFocus);
+			}
 
 			_keyboardFocusElement = element;
 			if (_keyboardFocusElement != null)
+			{
 				_keyboardFocusElement.GainedFocus();
+				this.OnGainedFocus(_keyboardFocusElement);
+			}
+		}
+
+		protected virtual void OnGainedFocus(IKeyboardListener keyboardFocusElement)
+		{
+			Emitter.Emit(StageEventType.FocusGained, new StageEvent { Element = keyboardFocusElement as Element });
+		}
+
+		protected virtual void OnLostFocus(IKeyboardListener oldKeyboardFocus)
+		{
+			Emitter.Emit(StageEventType.FocusLost, new StageEvent { Element = oldKeyboardFocus as Element });
 		}
 
 

@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework;
 using System.Collections.Generic;
 using Nez.Systems;
 using System.Runtime.CompilerServices;
-
+using System;
 
 namespace Nez
 {
@@ -27,6 +27,8 @@ namespace Nez
 		/// the TouchInput details when on a device that supports touch
 		/// </summary>
 		public static TouchInput Touch;
+
+		public static List<string> CharBuffer { get; }
 
 		/// <summary>
 		/// set by the Scene and used to scale mouse input for cases where the Scene render target is a different size
@@ -68,6 +70,7 @@ namespace Nez
 		{
 			Emitter = new Emitter<InputEventType, InputEvent>();
 			Touch = new TouchInput();
+			CharBuffer = new List<string>();
 
 			_previousKbState = new KeyboardState();
 			_currentKbState = Keyboard.GetState();
@@ -164,7 +167,6 @@ namespace Nez
 		{
 			return _currentKbState.IsKeyDown(key);
 		}
-
 
 		/// <summary>
 		/// true only the frame the key is released
@@ -298,6 +300,14 @@ namespace Nez
 		public static bool FirstExtendedMouseButtonReleased =>
 			_currentMouseState.XButton1 == ButtonState.Released &&
 			_previousMouseState.XButton1 == ButtonState.Pressed;
+
+		internal static IList<string> SwapStringBuffer()
+		{
+			var result = new string[CharBuffer.Count];
+			CharBuffer.CopyTo(0, result, 0, result.Length);
+			CharBuffer.RemoveRange(0, result.Length);
+			return result;
+		}
 
 		/// <summary>
 		/// only true if down this frame

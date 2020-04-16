@@ -4,7 +4,7 @@ using Microsoft.Xna.Framework;
 using System.Text;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework.Input;
-using System.Globalization;
+using static Nez.UI.TextField;
 
 namespace Nez.UI
 {
@@ -22,24 +22,24 @@ namespace Nez.UI
 	/// The desktop keyboard is a stub, as a softkeyboard is not needed on the desktop. The Android {@link OnscreenKeyboard}
 	/// implementation will bring up the default IME.
 	/// </summary>
-	public class TextField : Element, IInputListener, IKeyboardListener
+	public class OriginalTextField : TextField, IInputListener, IKeyboardListener
 	{
-		public event Action<TextField, string> OnTextChanged;
-		public event Action<TextField> OnEnterPressed = delegate { };
-		public event Action<TextField> OnTabPressed = delegate { };
+		public event Action<OriginalTextField, string> OnTextChanged;
+		public event Action<OriginalTextField> OnEnterPressed = delegate { };
+		public event Action<OriginalTextField> OnTabPressed = delegate { };
 
 		public override float PreferredWidth => _preferredWidth;
-		 
+
 		public override float PreferredHeight
 		{
 			get
 			{
-				var prefHeight = TextHeight;
+				var prefHeight = textHeight;
 				if (style.Background != null)
 					prefHeight = Math.Max(prefHeight + style.Background.BottomHeight + style.Background.TopHeight,
 						style.Background.MinHeight);
 
-					return prefHeight;
+				return prefHeight;
 			}
 		}
 
@@ -54,46 +54,32 @@ namespace Nez.UI
 		public bool ShouldIgnoreTextUpdatesWhileFocused = true;
 
 		protected string text;
-		protected int _cursor, selectionStart;
-		protected int cursor
-		{
-			get
-			{
- 				return _cursor;
-			}
-			set
-			{
-				_cursor = value;
-			}
-		}
+		protected int cursor, selectionStart;
 		protected bool hasSelection;
 		protected bool writeEnters;
 		List<float> glyphPositions = new List<float>(15);
 
 		float _preferredWidth = 150;
 		TextFieldStyle style;
-		protected string MessageText;
+		string messageText;
 		protected string displayText = string.Empty;
 		ITextFieldFilter filter;
-		bool focusTraversal = true, onlyFontChars = true;
-		protected bool Disabled;
+		bool focusTraversal = true, onlyFontChars = true, disabled;
 		int textHAlign = AlignInternal.Left;
-		protected float SelectionX, SelectionWidth;
+		float selectionX, selectionWidth;
 		StringBuilder _textBuffer = new StringBuilder();
 
 		bool passwordMode;
 		StringBuilder passwordBuffer;
 		char passwordCharacter = '*';
 
-		protected float fontOffset, textOffset;
-		protected float textHeight;
-		protected virtual float TextHeight { get => textHeight; }
-		protected float RenderOffset { get; set; } = 0.0f;
-		protected int VisibleTextStart, VisibleTextEnd;
+		protected float fontOffset, textHeight, textOffset;
+		float renderOffset;
+		int visibleTextStart, visibleTextEnd;
 		int maxLength = 0;
 
 		float blinkTime = 0.5f;
-		protected bool CursorOn = true;
+		bool cursorOn = true;
 		float lastBlink;
 
 		bool programmaticChangeEvents;
@@ -102,11 +88,8 @@ namespace Nez.UI
 		ITimer _keyRepeatTimer;
 		float _keyRepeatTime = 0.2f;
 
-		protected TextField() // dummy for childclasses
-		{
-		}
 
-		public TextField(string text, TextFieldStyle style)
+		public OriginalTextField(string text, TextFieldStyle style) : base()
 		{
 			SetStyle(style);
 			SetText(text);
@@ -114,7 +97,7 @@ namespace Nez.UI
 		}
 
 
-		public TextField(string text, Skin skin, string styleName = null) : this(text,
+		public OriginalTextField(string text, Skin skin, string styleName = null) : this(text,
 			skin.Get<TextFieldStyle>(styleName))
 		{ }
 
@@ -139,7 +122,7 @@ namespace Nez.UI
 
 		bool IInputListener.OnMousePressed(Vector2 mousePos)
 		{
-			if (Disabled)
+			if (disabled)
 				return false;
 
 			_isPressed = true;
@@ -193,11 +176,11 @@ namespace Nez.UI
 
 		void IKeyboardListener.KeyDown(Keys key)
 		{
-			if (Disabled)
+			if (disabled)
 				return;
 
 			lastBlink = 0;
-			CursorOn = false;
+			cursorOn = false;
 
 			var isCtrlDown = InputUtils.IsControlDown();
 			var jump = isCtrlDown && !passwordMode;
@@ -291,7 +274,7 @@ namespace Nez.UI
 				}
 			}
 
-			cursor = Mathf.Clamp(cursor, 0, GetComposedLength(text));
+			cursor = Mathf.Clamp(cursor, 0, text.Length);
 
 			if (repeat)
 			{
@@ -302,10 +285,6 @@ namespace Nez.UI
 			}
 		}
 
-		protected virtual int GetComposedLength(string text)
-		{
-			return text?.Length ?? 0;
-		}
 
 		void IKeyboardListener.KeyPressed(Keys key, char character)
 		{
@@ -359,27 +338,27 @@ namespace Nez.UI
 					{
 						if (backspacePressed && cursor > 0)
 						{
-							var te = GetComposedLength(text);
-							text = SafeSubstringByTextElements(text, 0, cursor - 1) + SafeSubstringByTextElements(text, cursor--);
-							RenderOffset = 0;
+							text = text.Substring(0, cursor - 1) + text.Substring(cursor--);
+							renderOffset = 0;
 						}
 
-						if (deletePressed && cursor < GetComposedLength(text))
+						if (deletePressed && cursor < text.Length)
 						{
-							text = SafeSubstringByTextElements(text, 0, cursor) + SafeSubstringByTextElements(text, cursor + 1);
+							text = text.Substring(0, cursor) + text.Substring(cursor + 1);
 						}
 					}
 
 					if (add && !remove)
 					{
 						// character may be added to the text.
-						if (!enterPressed)
+						if (!enterPressed && filter != null && !filter.AcceptChar(this, character))
 							return;
 
-						if (!WithinMaxLength(GetComposedLength(text)))
+						if (!WithinMaxLength(text.Length))
 							return;
 
-						text = Insert(cursor++, "\n", text);
+						var insertion = enterPressed ? "\n" : character.ToString();
+						text = Insert(cursor++, insertion, text);
 					}
 
 					ChangeText(oldText, text);
@@ -388,15 +367,6 @@ namespace Nez.UI
 			}
 		}
 
-		protected virtual string SafeSubstringByTextElements(string text, int startIndex, int length)
-		{
-			return text.Substring(startIndex, length);
-		}
-
-		protected virtual string SafeSubstringByTextElements(string text, int startIndex)
-		{
-			return text.Substring(startIndex);
-		}
 
 		void IKeyboardListener.KeyReleased(Keys key)
 		{
@@ -410,21 +380,11 @@ namespace Nez.UI
 
 		void IKeyboardListener.GainedFocus()
 		{
-			OnGainedFocus();
-		}
-
-		protected virtual void OnGainedFocus()
-		{
 			hasSelection = _isFocused = true;
 		}
 
 
 		void IKeyboardListener.LostFocus()
-		{
-			OnLostFocus();
-		}
-
-		protected virtual void OnLostFocus()
 		{
 			hasSelection = _isFocused = false;
 			if (_keyRepeatTimer != null)
@@ -441,13 +401,13 @@ namespace Nez.UI
 		{
 			var halfSpaceSize = style.Font.DefaultCharacter.Bounds.Width + style.Font.DefaultCharacter.XAdvance;
 			x -= textOffset + fontOffset + halfSpaceSize /*- style.font.getData().cursorX*/ -
-				 GetPositionTo(VisibleTextStart);
-			var n = GetComposedLength(text) + 1;// glyphPositions.Count;
+				 glyphPositions[visibleTextStart];
+			var n = glyphPositions.Count;
 			for (var i = 0; i < n; i++)
 			{
-				if (GetPositionTo(i) > x && i >= 1)
+				if (glyphPositions[i] > x && i >= 1)
 				{
-					if (GetPositionTo(i) - x <= x - GetPositionTo(i - 1))
+					if (glyphPositions[i] - x <= x - glyphPositions[i - 1])
 						return i;
 
 					return i - 1;
@@ -466,7 +426,7 @@ namespace Nez.UI
 
 		protected int[] WordUnderCursor(int at)
 		{
-			int start = at, right = GetComposedLength(text), left = 0, index = start;
+			int start = at, right = text.Length, left = 0, index = start;
 			for (; index < right; index++)
 			{
 				if (!IsWordCharacter(text[index]))
@@ -501,7 +461,7 @@ namespace Nez.UI
 		}
 
 
-		public TextField SetMaxLength(int maxLength)
+		public OriginalTextField SetMaxLength(int maxLength)
 		{
 			this.maxLength = maxLength;
 			return this;
@@ -527,7 +487,7 @@ namespace Nez.UI
 		}
 
 
-		public virtual TextField SetStyle(TextFieldStyle style)
+		public OriginalTextField SetStyle(TextFieldStyle style)
 		{
 			this.style = style;
 			textHeight = style.Font.LineHeight;
@@ -545,73 +505,65 @@ namespace Nez.UI
 			return style;
 		}
 
-		protected virtual float GetVisibleWidth()
-		{
-			float visibleWidth = GetWidth();
-			if (style.Background != null)
-				visibleWidth -= style.Background.LeftWidth + style.Background.RightWidth;
-			return visibleWidth;
-		}
 
 		protected void CalculateOffsets()
 		{
-			//CalculateOffsets_New(); return;
 			float visibleWidth = GetWidth();
 			if (style.Background != null)
 				visibleWidth -= style.Background.LeftWidth + style.Background.RightWidth;
 
-			var positionCount = GetComposedLength(text) + 1; // +1 to account for positioning after the text
-			
+			var glyphCount = glyphPositions.Count;
+
 			// Check if the cursor has gone out the left or right side of the visible area and adjust renderoffset.
-			var distance = GetPositionTo(Math.Max(0, cursor - 1)) + RenderOffset;
+			var distance = glyphPositions[Math.Max(0, cursor - 1)] + renderOffset;
 			if (distance <= 0)
 			{
-				RenderOffset -= distance;
+				renderOffset -= distance;
 			}
 			else
 			{
-				var index = Math.Min(positionCount - 1, cursor + 1);
-				var minX = GetPositionTo(index) - visibleWidth;
-				if (-RenderOffset < minX)
+				var index = Math.Min(glyphCount - 1, cursor + 1);
+				var minX = glyphPositions[index] - visibleWidth;
+				if (-renderOffset < minX)
 				{
-					RenderOffset = -minX;
+					renderOffset = -minX;
 				}
 			}
 
 			// calculate first visible char based on render offset
-			VisibleTextStart = 0;
+			visibleTextStart = 0;
 			var startX = 0f;
-			for (var i = 0; i < positionCount; i++)
+			for (var i = 0; i < glyphCount; i++)
 			{
-				var posToI = GetPositionTo(i);
-				if (posToI >= -RenderOffset)
+				if (glyphPositions[i] >= -renderOffset)
 				{
-					VisibleTextStart = Math.Max(0, i);
-					startX = posToI;
+					visibleTextStart = Math.Max(0, i);
+					startX = glyphPositions[i];
 					break;
 				}
 			}
 
 			// calculate last visible char based on visible width and render offset
 			var length = displayText.Length;
-			VisibleTextEnd = Math.Min(length, cursor + 1);
-			for (; VisibleTextEnd <= length; VisibleTextEnd++)
-				if (GetPositionTo(VisibleTextEnd) > startX + visibleWidth)
+			visibleTextEnd = Math.Min(length, cursor + 1);
+			for (; visibleTextEnd <= length; visibleTextEnd++)
+				if (glyphPositions[visibleTextEnd] > startX + visibleWidth)
 				{
+					var dummy = glyphPositions[visibleTextEnd];
 					break;
 				}
 
-			VisibleTextEnd = Math.Max(0, VisibleTextEnd - 1);
+			visibleTextEnd = Math.Max(0, visibleTextEnd - 1);
 
 			if ((textHAlign & AlignInternal.Left) == 0)
 			{
-				textOffset = visibleWidth - (GetPositionTo(VisibleTextEnd) - startX);
+				textOffset = visibleWidth - (glyphPositions[visibleTextEnd] - startX);
 				if ((textHAlign & AlignInternal.Center) != 0)
 					textOffset = Mathf.Round(textOffset * 0.5f);
 			}
 			else
 			{
-				textOffset = startX + RenderOffset;
+				textOffset = startX + renderOffset;
 			}
 
 			// calculate selection x position and width
@@ -619,14 +571,14 @@ namespace Nez.UI
 			{
 				var minIndex = Math.Min(cursor, selectionStart);
 				var maxIndex = Math.Max(cursor, selectionStart);
-				var minX = Math.Max(GetPositionTo(minIndex), -RenderOffset);
-				var maxX = Math.Min(GetPositionTo(maxIndex), visibleWidth - RenderOffset);
-				SelectionX = minX;
+				var minX = Math.Max(glyphPositions[minIndex], -renderOffset);
+				var maxX = Math.Min(glyphPositions[maxIndex], visibleWidth - renderOffset);
+				selectionX = minX;
 
-				if (RenderOffset == 0)
-					SelectionX += textOffset;
+				if (renderOffset == 0)
+					selectionX += textOffset;
 
-				SelectionWidth = maxX - minX;
+				selectionWidth = maxX - minX;
 			}
 		}
 
@@ -636,18 +588,27 @@ namespace Nez.UI
 		public override void Draw(Batcher batcher, float parentAlpha)
 		{
 			var font = style.Font;
-			var fontColor = this.GetFontColor();
+			var fontColor = (disabled && style.DisabledFontColor.HasValue)
+				? style.DisabledFontColor.Value
+				: ((_isFocused && style.FocusedFontColor.HasValue) ? style.FocusedFontColor.Value : style.FontColor);
 			IDrawable selection = style.Selection;
-			var background = this.GetBackgroundDrawable();
-			
+			IDrawable background = (disabled && style.DisabledBackground != null)
+				? style.DisabledBackground
+				: ((_isFocused && style.FocusedBackground != null) ? style.FocusedBackground : style.Background);
+
 			var color = GetColor();
 			var x = GetX();
 			var y = GetY();
 			var width = GetWidth();
 			var height = GetHeight();
-			var bgLeftWidth = background?.LeftWidth ?? 0;
 
-			this.DrawBackgroundIfNeeded(batcher, background, parentAlpha);
+			float bgLeftWidth = 0, bgRightWidth = 0;
+			if (background != null)
+			{
+				background.Draw(batcher, x, y, width, height, ColorExt.Create(color, (int)(color.A * parentAlpha)));
+				bgLeftWidth = background.LeftWidth;
+				bgRightWidth = background.RightWidth;
+			}
 
 			var textY = GetTextY(font, background);
 			var yOffset = (textY < 0) ? -textY - font.LineHeight / 2f + GetHeight() / 2 : 0;
@@ -656,13 +617,15 @@ namespace Nez.UI
 			if (_isFocused && hasSelection && selection != null)
 				DrawSelection(selection, batcher, font, x + bgLeftWidth, y + textY + yOffset);
 
-			if (GetComposedLength(displayText) == 0)
+			if (displayText.Length == 0)
 			{
-				if (!_isFocused && MessageText != null)
+				if (!_isFocused && messageText != null)
 				{
-					var messageFontColor = GetMessageFontColor(parentAlpha);
-					var messageFont = GetMessageFont(); 
-					batcher.DrawString(messageFont, MessageText,
+					var messageFontColor = style.MessageFontColor.HasValue
+						? style.MessageFontColor.Value
+						: new Color(180, 180, 180, (int)(color.A * parentAlpha));
+					var messageFont = style.MessageFont != null ? style.MessageFont : font;
+					batcher.DrawString(messageFont, messageText,
 						new Vector2(x + bgLeftWidth, y + textY + yOffset), messageFontColor);
 
 					//messageFont.draw( batcher.batcher, messageText, x + bgLeftWidth, y + textY + yOffset, 0, messageText.length(),
@@ -672,58 +635,24 @@ namespace Nez.UI
 			else
 			{
 				var col = ColorExt.Create(fontColor, (int)(fontColor.A * parentAlpha));
-				var t = SafeSubstringByTextElements(displayText, VisibleTextStart, VisibleTextEnd - VisibleTextStart);
+				var t = displayText.Substring(visibleTextStart, visibleTextEnd - visibleTextStart);
 				batcher.DrawString(font, t, new Vector2(x + bgLeftWidth + textOffset, y + textY + yOffset),
 					col);
 			}
 
-			if (_isFocused && !Disabled)
+			if (_isFocused && !disabled)
 			{
 				Blink();
-				if (CursorOn && style.Cursor != null)
+				if (cursorOn && style.Cursor != null)
 					DrawCursor(style.Cursor, batcher, font, x + bgLeftWidth, y + textY + yOffset);
 			}
 		}
 
-		protected BitmapFont GetMessageFont()
-		{
-			return style.MessageFont != null ? style.MessageFont : style.Font;
-		}
-
-		protected IDrawable? GetBackgroundDrawable()
-		{
-			return (Disabled && style.DisabledBackground != null)
-				? style.DisabledBackground
-				: ((_isFocused && style.FocusedBackground != null) ? style.FocusedBackground : style.Background);
-		}
-
-		protected void DrawBackgroundIfNeeded(Batcher batcher, IDrawable background, float parentAlpha)
-		{
-			if (background != null)
-			{
-				background.Draw(batcher, x, y, width, height, ColorExt.Create(color, (int)(color.A * parentAlpha)));
-			}
-		}
-
-		protected Color GetFontColor()
-		{
-			// TODO: disabled and isFocused should refresh _texture
-			return (Disabled && style.DisabledFontColor.HasValue)
-			   ? style.DisabledFontColor.Value
-			   : ((_isFocused && style.FocusedFontColor.HasValue) ? style.FocusedFontColor.Value : style.FontColor);
-		}
-
-		protected Color GetMessageFontColor(float parentAlpha)
-		{
-			return style.MessageFontColor.HasValue
-						? style.MessageFontColor.Value
-						: new Color(180, 180, 180, (int)(color.A * parentAlpha)); 
-		}
 
 		protected float GetTextY(BitmapFont font, IDrawable background)
 		{
 			float height = GetHeight();
-			float textY = TextHeight / 2 + font.Padding.Bottom;
+			float textY = textHeight / 2 + font.Padding.Bottom;
 			if (background != null)
 			{
 				var bottom = background.BottomHeight;
@@ -748,28 +677,17 @@ namespace Nez.UI
 		/// <param name="y">The y coordinate.</param>
 		protected void DrawSelection(IDrawable selection, Batcher batcher, BitmapFont font, float x, float y)
 		{
-			selection.Draw(batcher, x + SelectionX + RenderOffset + fontOffset, y - font.Padding.Bottom / 2,
-				SelectionWidth, TextHeight, Color.White);
+			selection.Draw(batcher, x + selectionX + renderOffset + fontOffset, y - font.Padding.Bottom / 2,
+				selectionWidth, textHeight, Color.White);
 		}
 
 
 		protected void DrawCursor(IDrawable cursorPatch, Batcher batcher, BitmapFont font, float x, float y)
 		{
 			cursorPatch.Draw(batcher,
-				x + textOffset + GetPositionTo(cursor) - GetPositionTo(VisibleTextStart) + fontOffset -
+				x + textOffset + glyphPositions[cursor] - glyphPositions[visibleTextStart] + fontOffset -
 				1 /*font.getData().cursorX*/,
-				y - font.Padding.Bottom / 2, cursorPatch.MinWidth, TextHeight, color);
-		}
-
-		protected virtual float GetPositionTo(int index)
-		{
-			try
-			{
-				return glyphPositions[index];
-			} catch (ArgumentOutOfRangeException)
-			{
-				throw;
-			}
+				y - font.Padding.Bottom / 2, cursorPatch.MinWidth, textHeight, color);
 		}
 
 		#endregion
@@ -777,7 +695,7 @@ namespace Nez.UI
 
 		void UpdateDisplayText()
 		{
-			var textLength = GetComposedLength(text);
+			var textLength = text.Length;
 
 			_textBuffer.Clear();
 			for (var i = 0; i < textLength; i++)
@@ -807,9 +725,9 @@ namespace Nez.UI
 			//layout.setText( font, displayText );
 			glyphPositions.Clear();
 			float x = 0;
-			if (GetComposedLength(displayText) > 0)
+			if (displayText.Length > 0)
 			{
-				for (var i = 0; i < GetComposedLength(displayText); i++)
+				for (var i = 0; i < displayText.Length; i++)
 				{
 					var region = style.Font[displayText[i]];
 
@@ -836,16 +754,16 @@ namespace Nez.UI
 
 			glyphPositions.Add(x);
 
-			if (selectionStart > GetComposedLength(newDisplayText))
+			if (selectionStart > newDisplayText.Length)
 				selectionStart = textLength;
 		}
 
 
-		protected void Blink()
+		void Blink()
 		{
 			if ((Time.TotalTime - lastBlink) > blinkTime)
 			{
-				CursorOn = !CursorOn;
+				cursorOn = !cursorOn;
 				lastBlink = Time.TotalTime;
 			}
 		}
@@ -862,7 +780,7 @@ namespace Nez.UI
 			{
 				var start = Math.Min(cursor, selectionStart);
 				var length = Math.Max(cursor, selectionStart) - start;
-				Clipboard.SetContents(SafeSubstringByTextElements(text, start, length));
+				Clipboard.SetContents(text.Substring(start, length));
 			}
 		}
 
@@ -893,7 +811,7 @@ namespace Nez.UI
 				return;
 
 			_textBuffer.Clear();
-			int textLength = GetComposedLength(text);
+			int textLength = text.Length;
 			if (hasSelection)
 				textLength -= Math.Abs(cursor - selectionStart);
 
@@ -925,7 +843,7 @@ namespace Nez.UI
 			else
 				text = Insert(cursor, content, text);
 			UpdateDisplayText();
-			cursor += GetComposedLength(content);
+			cursor += content.Length;
 		}
 
 
@@ -934,33 +852,26 @@ namespace Nez.UI
 			if (to.Length == 0)
 				return text;
 
-			return SafeSubstringByTextElements(to, 0, position) + text + SafeSubstringByTextElements(to, position, GetComposedLength(to) - position);
+			return to.Substring(0, position) + text + to.Substring(position, to.Length - position);
 		}
 
 
 		int Delete(bool fireChangeEvent)
 		{
-			try
-			{
-				var from = selectionStart;
-				var to = cursor;
-				var minIndex = Math.Min(from, to);
-				var maxIndex = Math.Max(from, to);
-				var newText = (minIndex > 0 ? SafeSubstringByTextElements(text, 0, minIndex) : string.Empty)
-							  + (maxIndex < GetComposedLength(text) ? SafeSubstringByTextElements(text, maxIndex, GetComposedLength(text) - maxIndex) : string.Empty);
+			var from = selectionStart;
+			var to = cursor;
+			var minIndex = Math.Min(from, to);
+			var maxIndex = Math.Max(from, to);
+			var newText = (minIndex > 0 ? text.Substring(0, minIndex) : "")
+						  + (maxIndex < text.Length ? text.Substring(maxIndex, text.Length - maxIndex) : "");
 
-				if (fireChangeEvent)
-					ChangeText(text, newText);
-				else
-					text = newText;
+			if (fireChangeEvent)
+				ChangeText(text, newText);
+			else
+				text = newText;
 
-				ClearSelection();
-				return minIndex;
-			}
-			catch (ArgumentOutOfRangeException)
-			{
-				throw;
-			}
+			ClearSelection();
+			return minIndex;
 		}
 
 
@@ -993,7 +904,7 @@ namespace Nez.UI
 		}
 
 
-		TextField FindNextTextField(List<Element> elements, TextField best, Vector2 bestCoords, Vector2 currentCoords,
+		OriginalTextField FindNextTextField(List<Element> elements, OriginalTextField best, Vector2 bestCoords, Vector2 currentCoords,
 									bool up)
 		{
 			bestCoords = Vector2.Zero;
@@ -1003,9 +914,9 @@ namespace Nez.UI
 				if (element == this)
 					continue;
 
-				if (element is TextField)
+				if (element is OriginalTextField)
 				{
-					var textField = (TextField)element;
+					var textField = (OriginalTextField)element;
 					if (textField.IsDisabled() || !textField.focusTraversal)
 						continue;
 
@@ -1018,7 +929,7 @@ namespace Nez.UI
 							|| (elementCoords.Y > bestCoords.Y ||
 								(elementCoords.Y == bestCoords.Y && elementCoords.X < bestCoords.X)) ^ up)
 						{
-							best = (TextField)element;
+							best = (OriginalTextField)element;
 							bestCoords = elementCoords;
 						}
 					}
@@ -1057,7 +968,7 @@ namespace Nez.UI
 		/// str If null, "" is used
 		/// </summary>
 		/// <param name="str">String.</param>
-		public TextField SetText(string str)
+		public OriginalTextField SetText(string str)
 		{
 			if (ShouldIgnoreTextUpdatesWhileFocused && _isFocused)
 				return this;
@@ -1083,7 +994,7 @@ namespace Nez.UI
 		/// force sets the text without validating or firing change events. Use at your own risk.
 		/// </summary>
 		/// <param name="str">String.</param>
-		public TextField SetTextForced(string str)
+		public OriginalTextField SetTextForced(string str)
 		{
 			text = str;
 			UpdateDisplayText();
@@ -1110,7 +1021,7 @@ namespace Nez.UI
 		/// </summary>
 		/// <param name="oldText">Old text.</param>
 		/// <param name="newText">New text.</param>
-		protected virtual void ChangeText(string oldText, string newText)
+		void ChangeText(string oldText, string newText)
 		{
 			if (newText == oldText)
 				return;
@@ -1126,7 +1037,7 @@ namespace Nez.UI
 		/// If false, methods that change the text will not fire {@link onTextChanged}, the event will be fired only when user changes the text
 		/// </summary>
 		/// <param name="programmaticChangeEvents">If set to <c>true</c> programmatic change events.</param>
-		public TextField SetProgrammaticChangeEvents(bool programmaticChangeEvents)
+		public OriginalTextField SetProgrammaticChangeEvents(bool programmaticChangeEvents)
 		{
 			this.programmaticChangeEvents = programmaticChangeEvents;
 			return this;
@@ -1142,7 +1053,7 @@ namespace Nez.UI
 		public string GetSelection()
 		{
 			return hasSelection
-				? SafeSubstringByTextElements(text, Math.Min(selectionStart, cursor), Math.Max(selectionStart, cursor))
+				? text.Substring(Math.Min(selectionStart, cursor), Math.Max(selectionStart, cursor))
 				: "";
 		}
 
@@ -1152,7 +1063,7 @@ namespace Nez.UI
 		/// </summary>
 		/// <param name="selectionStart">Selection start.</param>
 		/// <param name="selectionEnd">Selection end.</param>
-		public TextField SetSelection(int selectionStart, int selectionEnd)
+		public OriginalTextField SetSelection(int selectionStart, int selectionEnd)
 		{
 			Insist.IsFalse(selectionStart < 0, "selectionStart must be >= 0");
 			Insist.IsFalse(selectionEnd < 0, "selectionEnd must be >= 0");
@@ -1195,7 +1106,7 @@ namespace Nez.UI
 		protected void SetCursorPosition(float x, float y)
 		{
 			lastBlink = 0;
-			CursorOn = false;
+			cursorOn = false;
 			cursor = LetterUnderCursor(x);
 		}
 
@@ -1204,7 +1115,7 @@ namespace Nez.UI
 		/// Sets the cursor position and clears any selection
 		/// </summary>
 		/// <param name="cursorPosition">Cursor position.</param>
-		public TextField SetCursorPosition(int cursorPosition)
+		public OriginalTextField SetCursorPosition(int cursorPosition)
 		{
 			Insist.IsFalse(cursorPosition < 0, "cursorPosition must be >= 0");
 			ClearSelection();
@@ -1256,7 +1167,7 @@ namespace Nez.UI
 
 		#region Configuration
 
-		public TextField SetPreferredWidth(float preferredWidth)
+		public OriginalTextField SetPreferredWidth(float preferredWidth)
 		{
 			_preferredWidth = preferredWidth;
 			return this;
@@ -1267,7 +1178,7 @@ namespace Nez.UI
 		/// filter May be null
 		/// </summary>
 		/// <param name="filter">Filter.</param>
-		public TextField SetTextFieldFilter(ITextFieldFilter filter)
+		public OriginalTextField SetTextFieldFilter(ITextFieldFilter filter)
 		{
 			this.filter = filter;
 			return this;
@@ -1284,7 +1195,7 @@ namespace Nez.UI
 		/// If true (the default), tab/shift+tab will move to the next text field
 		/// </summary>
 		/// <param name="focusTraversal">If set to <c>true</c> focus traversal.</param>
-		public TextField SetFocusTraversal(bool focusTraversal)
+		public OriginalTextField SetFocusTraversal(bool focusTraversal)
 		{
 			this.focusTraversal = focusTraversal;
 			return this;
@@ -1297,7 +1208,7 @@ namespace Nez.UI
 		/// <returns>The message text.</returns>
 		public string GetMessageText()
 		{
-			return MessageText;
+			return messageText;
 		}
 
 
@@ -1305,9 +1216,9 @@ namespace Nez.UI
 		/// Sets the text that will be drawn in the text field if no text has been entered.
 		/// </summary>
 		/// <param name="messageText">Message text.</param>
-		public virtual TextField SetMessageText(string messageText)
+		public OriginalTextField SetMessageText(string messageText)
 		{
-			this.MessageText = messageText;
+			this.messageText = messageText;
 			return this;
 		}
 
@@ -1316,18 +1227,10 @@ namespace Nez.UI
 		/// Sets text horizontal alignment (left, center or right).
 		/// </summary>
 		/// <param name="alignment">Alignment.</param>
-		public TextField SetAlignment(Align alignment)
+		public OriginalTextField SetAlignment(Align alignment)
 		{
 			textHAlign = (int)alignment;
 			return this;
-		}
-
-		/// <summary>
-		/// Gets text horizontal alignment (left, center or right).
-		/// </summary>
-		public Align GetAlignment()
-		{
-			return (Align)textHAlign;
 		}
 
 
@@ -1335,7 +1238,7 @@ namespace Nez.UI
 		/// If true, the text in this text field will be shown as bullet characters.
 		/// </summary>
 		/// <param name="passwordMode">Password mode.</param>
-		public TextField SetPasswordMode(bool passwordMode)
+		public OriginalTextField SetPasswordMode(bool passwordMode)
 		{
 			this.passwordMode = passwordMode;
 			UpdateDisplayText();
@@ -1353,7 +1256,7 @@ namespace Nez.UI
 		/// Sets the password character for the text field. The character must be present in the {@link BitmapFont}. Default is 149 (bullet)
 		/// </summary>
 		/// <param name="passwordCharacter">Password character.</param>
-		public TextField SetPasswordCharacter(char passwordCharacter)
+		public OriginalTextField SetPasswordCharacter(char passwordCharacter)
 		{
 			this.passwordCharacter = passwordCharacter;
 			if (passwordMode)
@@ -1362,164 +1265,33 @@ namespace Nez.UI
 		}
 
 
-		public TextField SetBlinkTime(float blinkTime)
+		public OriginalTextField SetBlinkTime(float blinkTime)
 		{
 			this.blinkTime = blinkTime;
 			return this;
 		}
 
 
-		public TextField SetDisabled(bool disabled)
+		public OriginalTextField SetDisabled(bool disabled)
 		{
-			this.Disabled = disabled;
+			this.disabled = disabled;
 			return this;
 		}
 
 
 		public bool IsDisabled()
 		{
-			return Disabled;
+			return disabled;
 		}
 
-		public void NewCharactersAvailable(IList<string> charBuffer)
+		public void NewCharactersAvailable(IList<char> charBuffer)
 		{
-			if (charBuffer.Count < 1) { return; }
-			var oldText = this.text;
-
-			if (hasSelection)
-			{
-				cursor = Delete(false);
-			}
-			this.text = Insert(cursor, string.Join(string.Empty, charBuffer), this.text);
-			cursor += charBuffer.Count;
-
-			ChangeText(oldText, this.text);
-			UpdateDisplayText();
+			
 		}
 
 		#endregion
-
-
-		/// <summary>
-		/// Interface for filtering characters entered into the text field.
-		/// </summary>
-		public interface ITextFieldFilter
-		{
-			bool AcceptChar(TextField textField, char c);
-		}
 	}
 
 
-	public class TextFieldStyle
-	{
-		public BitmapFont Font;
-
-		public Color FontColor = Color.White;
-
-		/** Optional. */
-		public Color? FocusedFontColor, DisabledFontColor;
-
-		/** Optional. */
-		public IDrawable Background, FocusedBackground, DisabledBackground, Cursor, Selection;
-
-		/** Optional. */
-		public BitmapFont MessageFont;
-
-		/** Optional. */
-		public Color? MessageFontColor;
-
-
-		public TextFieldStyle()
-		{
-			Font = Graphics.Instance.BitmapFont;
-		}
-
-
-		public TextFieldStyle(BitmapFont font, Color fontColor, IDrawable cursor, IDrawable selection,
-							  IDrawable background)
-		{
-			Background = background;
-			Cursor = cursor;
-			Font = font ?? Graphics.Instance.BitmapFont;
-			FontColor = fontColor;
-			Selection = selection;
-		}
-
-
-		public static TextFieldStyle Create(Color fontColor, Color cursorColor, Color selectionColor,
-											Color backgroundColor)
-		{
-			var cursor = new PrimitiveDrawable(cursorColor);
-			cursor.MinWidth = 1;
-			cursor.LeftWidth = 4;
-
-			var background = new PrimitiveDrawable(backgroundColor);
-			background.LeftWidth = background.RightWidth = 10f;
-			background.BottomHeight = background.TopHeight = 5f;
-
-			return new TextFieldStyle
-			{
-				FontColor = fontColor,
-				Cursor = cursor,
-				Selection = new PrimitiveDrawable(selectionColor),
-				Background = background
-			};
-		}
-
-
-		public TextFieldStyle Clone()
-		{
-			return new TextFieldStyle
-			{
-				Font = Font,
-				FontColor = FontColor,
-				FocusedFontColor = FocusedFontColor,
-				DisabledFontColor = DisabledFontColor,
-				Background = Background,
-				FocusedBackground = FocusedBackground,
-				DisabledBackground = DisabledBackground,
-				Cursor = Cursor,
-				Selection = Selection,
-				MessageFont = MessageFont,
-				MessageFontColor = MessageFontColor
-			};
-		}
-	}
-
-
-	public class DigitsOnlyFilter : TextField.ITextFieldFilter
-	{
-		public bool AcceptChar(TextField textField, char c)
-		{
-			return Char.IsDigit(c) || c == '-';
-		}
-	}
-
-
-	public class FloatFilter : TextField.ITextFieldFilter
-	{
-		public bool AcceptChar(TextField textField, char c)
-		{
-			// only allow one .
-			if (c == '.')
-				return !textField.GetText().Contains(".");
-
-			return Char.IsDigit(c) || c == '-';
-		}
-	}
-
-
-	public class BoolFilter : TextField.ITextFieldFilter
-	{
-		public bool AcceptChar(TextField textField, char c)
-		{
-			if (c == 't' || c == 'T')
-				textField.SetTextForced("true");
-
-			if (c == 'f' || c == 'F')
-				textField.SetTextForced("false");
-
-			return false;
-		}
-	}
+	
 }
