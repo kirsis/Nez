@@ -15,6 +15,7 @@
 		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<NoWarn>1591,1570,1572,1573</NoWarn>
+		<LangVersion>8.0</LangVersion>
 		<IntermediateOutputPath>obj\Nez\$(Configuration)</IntermediateOutputPath>
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 	</PropertyGroup>
