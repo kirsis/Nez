@@ -54,19 +54,33 @@ namespace Nez.UI
 		public bool ShouldIgnoreTextUpdatesWhileFocused = true;
 
 		protected string text;
-		protected int _cursor, selectionStart;
-		protected int cursor
+		protected int _cursor, _selectionStart;
+		protected virtual int Cursor
 		{
 			get
 			{
- 				return _cursor;
+				return _cursor;
 			}
 			set
 			{
 				_cursor = value;
 			}
 		}
-		protected bool hasSelection;
+		protected virtual int SelectionStart
+		{
+			get
+			{
+				return _selectionStart;
+			}
+			set
+			{
+				_selectionStart = value;
+			}
+		}
+		protected virtual bool HasSelection {
+			get;
+			set;
+		}
 		protected bool writeEnters;
 		List<float> glyphPositions = new List<float>(15);
 
@@ -139,13 +153,18 @@ namespace Nez.UI
 
 		bool IInputListener.OnMousePressed(Vector2 mousePos)
 		{
+			return OnMousePressed(mousePos);
+		}
+
+		protected virtual bool OnMousePressed(Vector2 mousePos)
+		{
 			if (Disabled)
 				return false;
 
 			_isPressed = true;
 			SetCursorPosition(mousePos.X, mousePos.Y);
-			selectionStart = cursor;
-			hasSelection = true;
+			SelectionStart = Cursor;
+			HasSelection = true;
 			var stage = GetStage();
 			if (stage != null)
 				stage.SetKeyboardFocus(this as IKeyboardListener);
@@ -170,8 +189,8 @@ namespace Nez.UI
 
 		void IInputListener.OnMouseUp(Vector2 mousePos)
 		{
-			if (selectionStart == cursor)
-				hasSelection = false;
+			if (SelectionStart == Cursor)
+				HasSelection = false;
 
 			if (Time.TotalTime - _lastClickTime > _clickCountInterval)
 				_clickCount = 0;
@@ -234,7 +253,7 @@ namespace Nez.UI
 					Cut(true);
 
 				// jumping around shortcuts
-				var temp = cursor;
+				var temp = Cursor;
 				var foundJumpKey = true;
 
 				if (key == Keys.Left)
@@ -260,10 +279,10 @@ namespace Nez.UI
 					foundJumpKey = false;
 				}
 
-				if (foundJumpKey && !hasSelection)
+				if (foundJumpKey && !HasSelection)
 				{
-					selectionStart = temp;
-					hasSelection = true;
+					SelectionStart = temp;
+					HasSelection = true;
 				}
 			}
 			else
@@ -271,14 +290,28 @@ namespace Nez.UI
 				// Cursor movement or other keys (kills selection)
 				if (key == Keys.Left)
 				{
-					MoveCursor(false, jump);
-					ClearSelection();
+					if (HasSelection)
+					{
+						Cursor = Math.Min(Cursor, SelectionStart);
+						ClearSelection();
+					} else
+					{
+						MoveCursor(false, jump);
+					}
+
 					repeat = true;
 				}
 				else if (key == Keys.Right)
 				{
-					MoveCursor(true, jump);
-					ClearSelection();
+					if (HasSelection)
+					{
+						Cursor = Math.Max(Cursor, SelectionStart);
+						ClearSelection();
+					}
+					else
+					{
+						MoveCursor(true, jump);
+					}
 					repeat = true;
 				}
 				else if (key == Keys.Home)
@@ -291,7 +324,7 @@ namespace Nez.UI
 				}
 			}
 
-			cursor = Mathf.Clamp(cursor, 0, GetComposedLength(text));
+			Cursor = Mathf.Clamp(Cursor, 0, GetComposedLength(text));
 
 			if (repeat)
 			{
@@ -308,6 +341,11 @@ namespace Nez.UI
 		}
 
 		void IKeyboardListener.KeyPressed(Keys key, char character)
+		{
+			this.KeyPressed(key, character);
+		}
+
+		protected void KeyPressed(Keys key, char character)
 		{
 			if (InputUtils.IsControlDown())
 				return;
@@ -351,22 +389,22 @@ namespace Nez.UI
 				if (add || remove)
 				{
 					var oldText = text;
-					if (hasSelection)
+					if (HasSelection)
 					{
-						cursor = Delete(false);
+						Cursor = Delete(false);
 					}
 					else
 					{
-						if (backspacePressed && cursor > 0)
+						if (backspacePressed && Cursor > 0)
 						{
 							var te = GetComposedLength(text);
-							text = SafeSubstringByTextElements(text, 0, cursor - 1) + SafeSubstringByTextElements(text, cursor--);
+							text = SafeSubstringByTextElements(text, 0, Cursor - 1) + SafeSubstringByTextElements(text, Cursor--);
 							RenderOffset = 0;
 						}
 
-						if (deletePressed && cursor < GetComposedLength(text))
+						if (deletePressed && Cursor < GetComposedLength(text))
 						{
-							text = SafeSubstringByTextElements(text, 0, cursor) + SafeSubstringByTextElements(text, cursor + 1);
+							text = SafeSubstringByTextElements(text, 0, Cursor) + SafeSubstringByTextElements(text, Cursor + 1);
 						}
 					}
 
@@ -379,7 +417,7 @@ namespace Nez.UI
 						if (!WithinMaxLength(GetComposedLength(text)))
 							return;
 
-						text = Insert(cursor++, "\n", text);
+						text = Insert(Cursor++, "\n", text);
 					}
 
 					ChangeText(oldText, text);
@@ -415,7 +453,7 @@ namespace Nez.UI
 
 		protected virtual void OnGainedFocus()
 		{
-			hasSelection = _isFocused = true;
+			HasSelection = _isFocused = true;
 		}
 
 
@@ -426,7 +464,7 @@ namespace Nez.UI
 
 		protected virtual void OnLostFocus()
 		{
-			hasSelection = _isFocused = false;
+			HasSelection = _isFocused = false;
 			if (_keyRepeatTimer != null)
 			{
 				_keyRepeatTimer.Stop();
@@ -437,8 +475,9 @@ namespace Nez.UI
 		#endregion
 
 
-		protected int LetterUnderCursor(float x)
+		protected virtual int LetterUnderCursor(float x, float y)
 		{
+			System.Diagnostics.Debug.WriteLine($"Letter under {x}");
 			var halfSpaceSize = style.Font.DefaultCharacter.Bounds.Width + style.Font.DefaultCharacter.XAdvance;
 			x -= textOffset + fontOffset + halfSpaceSize /*- style.font.getData().cursorX*/ -
 				 GetPositionTo(VisibleTextStart);
@@ -489,9 +528,9 @@ namespace Nez.UI
 		}
 
 
-		int[] WordUnderCursor(float x)
+		int[] WordUnderCursor(float x, float y)
 		{
-			return WordUnderCursor(LetterUnderCursor(x));
+			return WordUnderCursor(LetterUnderCursor(x, y));
 		}
 
 
@@ -563,14 +602,14 @@ namespace Nez.UI
 			var positionCount = GetComposedLength(text) + 1; // +1 to account for positioning after the text
 			
 			// Check if the cursor has gone out the left or right side of the visible area and adjust renderoffset.
-			var distance = GetPositionTo(Math.Max(0, cursor - 1)) + RenderOffset;
+			var distance = GetPositionTo(Math.Max(0, Cursor - 1)) + RenderOffset;
 			if (distance <= 0)
 			{
 				RenderOffset -= distance;
 			}
 			else
 			{
-				var index = Math.Min(positionCount - 1, cursor + 1);
+				var index = Math.Min(positionCount - 1, Cursor + 1);
 				var minX = GetPositionTo(index) - visibleWidth;
 				if (-RenderOffset < minX)
 				{
@@ -594,7 +633,7 @@ namespace Nez.UI
 
 			// calculate last visible char based on visible width and render offset
 			var length = displayText.Length;
-			VisibleTextEnd = Math.Min(length, cursor + 1);
+			VisibleTextEnd = Math.Min(length, Cursor + 1);
 			for (; VisibleTextEnd <= length; VisibleTextEnd++)
 				if (GetPositionTo(VisibleTextEnd) > startX + visibleWidth)
 				{
@@ -615,10 +654,10 @@ namespace Nez.UI
 			}
 
 			// calculate selection x position and width
-			if (hasSelection)
+			if (HasSelection)
 			{
-				var minIndex = Math.Min(cursor, selectionStart);
-				var maxIndex = Math.Max(cursor, selectionStart);
+				var minIndex = Math.Min(Cursor, SelectionStart);
+				var maxIndex = Math.Max(Cursor, SelectionStart);
 				var minX = Math.Max(GetPositionTo(minIndex), -RenderOffset);
 				var maxX = Math.Min(GetPositionTo(maxIndex), visibleWidth - RenderOffset);
 				SelectionX = minX;
@@ -653,7 +692,7 @@ namespace Nez.UI
 			var yOffset = (textY < 0) ? -textY - font.LineHeight / 2f + GetHeight() / 2 : 0;
 			CalculateOffsets();
 
-			if (_isFocused && hasSelection && selection != null)
+			if (_isFocused && HasSelection && selection != null)
 				DrawSelection(selection, batcher, font, x + bgLeftWidth, y + textY + yOffset);
 
 			if (GetComposedLength(displayText) == 0)
@@ -756,7 +795,7 @@ namespace Nez.UI
 		protected void DrawCursor(IDrawable cursorPatch, Batcher batcher, BitmapFont font, float x, float y)
 		{
 			cursorPatch.Draw(batcher,
-				x + textOffset + GetPositionTo(cursor) - GetPositionTo(VisibleTextStart) + fontOffset -
+				x + textOffset + GetPositionTo(Cursor) - GetPositionTo(VisibleTextStart) + fontOffset -
 				1 /*font.getData().cursorX*/,
 				y - font.Padding.Bottom / 2, cursorPatch.MinWidth, TextHeight, color);
 		}
@@ -836,8 +875,8 @@ namespace Nez.UI
 
 			glyphPositions.Add(x);
 
-			if (selectionStart > GetComposedLength(newDisplayText))
-				selectionStart = textLength;
+			if (SelectionStart > GetComposedLength(newDisplayText))
+				SelectionStart = textLength;
 		}
 
 
@@ -858,10 +897,10 @@ namespace Nez.UI
 		/// </summary>
 		public void Copy()
 		{
-			if (hasSelection && !passwordMode)
+			if (HasSelection && !passwordMode)
 			{
-				var start = Math.Min(cursor, selectionStart);
-				var length = Math.Max(cursor, selectionStart) - start;
+				var start = Math.Min(Cursor, SelectionStart);
+				var length = Math.Max(Cursor, SelectionStart) - start;
 				Clipboard.SetContents(SafeSubstringByTextElements(text, start, length));
 			}
 		}
@@ -878,10 +917,10 @@ namespace Nez.UI
 
 		void Cut(bool fireChangeEvent)
 		{
-			if (hasSelection && !passwordMode)
+			if (HasSelection && !passwordMode)
 			{
 				Copy();
-				cursor = Delete(fireChangeEvent);
+				Cursor = Delete(fireChangeEvent);
 				UpdateDisplayText();
 			}
 		}
@@ -894,8 +933,8 @@ namespace Nez.UI
 
 			_textBuffer.Clear();
 			int textLength = GetComposedLength(text);
-			if (hasSelection)
-				textLength -= Math.Abs(cursor - selectionStart);
+			if (HasSelection)
+				textLength -= Math.Abs(Cursor - SelectionStart);
 
 			//var data = style.font.getData();
 			for (int i = 0, n = content.Length; i < n; i++)
@@ -918,14 +957,14 @@ namespace Nez.UI
 
 			content = _textBuffer.ToString();
 
-			if (hasSelection)
-				cursor = Delete(fireChangeEvent);
+			if (HasSelection)
+				Cursor = Delete(fireChangeEvent);
 			if (fireChangeEvent)
-				ChangeText(text, Insert(cursor, content, text));
+				ChangeText(text, Insert(Cursor, content, text));
 			else
-				text = Insert(cursor, content, text);
+				text = Insert(Cursor, content, text);
 			UpdateDisplayText();
-			cursor += GetComposedLength(content);
+			Cursor += GetComposedLength(content);
 		}
 
 
@@ -942,8 +981,8 @@ namespace Nez.UI
 		{
 			try
 			{
-				var from = selectionStart;
-				var to = cursor;
+				var from = SelectionStart;
+				var to = Cursor;
 				var minIndex = Math.Min(from, to);
 				var maxIndex = Math.Max(from, to);
 				var newText = (minIndex > 0 ? SafeSubstringByTextElements(text, 0, minIndex) : string.Empty)
@@ -1048,7 +1087,7 @@ namespace Nez.UI
 				str = "";
 
 			ClearSelection();
-			cursor = text.Length;
+			Cursor = text.Length;
 			Paste(str, programmaticChangeEvents);
 		}
 
@@ -1073,7 +1112,7 @@ namespace Nez.UI
 			Paste(str, false);
 			if (programmaticChangeEvents)
 				ChangeText(oldText, text);
-			cursor = 0;
+			Cursor = 0;
 
 			return this;
 		}
@@ -1089,7 +1128,7 @@ namespace Nez.UI
 			UpdateDisplayText();
 
 			// ensure our cursor is in bounds
-			cursor = text.Length;
+			Cursor = text.Length;
 
 			return this;
 		}
@@ -1135,14 +1174,14 @@ namespace Nez.UI
 
 		public int GetSelectionStart()
 		{
-			return selectionStart;
+			return SelectionStart;
 		}
 
 
 		public string GetSelection()
 		{
-			return hasSelection
-				? SafeSubstringByTextElements(text, Math.Min(selectionStart, cursor), Math.Max(selectionStart, cursor))
+			return HasSelection
+				? SafeSubstringByTextElements(text, Math.Min(SelectionStart, Cursor), Math.Max(SelectionStart, Cursor))
 				: "";
 		}
 
@@ -1172,9 +1211,9 @@ namespace Nez.UI
 				selectionStart = temp;
 			}
 
-			hasSelection = true;
-			this.selectionStart = selectionStart;
-			cursor = selectionEnd;
+			HasSelection = true;
+			this.SelectionStart = selectionStart;
+			Cursor = selectionEnd;
 
 			return this;
 		}
@@ -1182,13 +1221,13 @@ namespace Nez.UI
 
 		public void SelectAll()
 		{
-			SetSelection(0, text.Length);
+			SetSelection(0, GetComposedLength(text));
 		}
 
 
 		public void ClearSelection()
 		{
-			hasSelection = false;
+			HasSelection = false;
 		}
 
 
@@ -1196,7 +1235,7 @@ namespace Nez.UI
 		{
 			lastBlink = 0;
 			CursorOn = false;
-			cursor = LetterUnderCursor(x);
+			Cursor = LetterUnderCursor(x, y);
 		}
 
 
@@ -1208,26 +1247,26 @@ namespace Nez.UI
 		{
 			Insist.IsFalse(cursorPosition < 0, "cursorPosition must be >= 0");
 			ClearSelection();
-			cursor = Math.Min(cursorPosition, text.Length);
+			Cursor = Math.Min(cursorPosition, text.Length);
 			return this;
 		}
 
 
 		public int GetCursorPosition()
 		{
-			return cursor;
+			return Cursor;
 		}
 
 
 		protected void GoHome()
 		{
-			cursor = 0;
+			Cursor = 0;
 		}
 
 
 		protected void GoEnd()
 		{
-			cursor = text.Length;
+			Cursor = text.Length;
 		}
 
 
@@ -1236,12 +1275,12 @@ namespace Nez.UI
 			var limit = forward ? text.Length : 0;
 			var charOffset = forward ? 0 : -1;
 
-			if ((forward && cursor == limit) || (!forward && cursor == 0))
+			if ((forward && Cursor == limit) || (!forward && Cursor == 0))
 				return;
 
-			while ((forward ? ++cursor < limit : --cursor > limit) && jump)
+			while ((forward ? ++Cursor < limit : --Cursor > limit) && jump)
 			{
-				if (!ContinueCursor(cursor, charOffset))
+				if (!ContinueCursor(Cursor, charOffset))
 					break;
 			}
 		}
@@ -1386,12 +1425,12 @@ namespace Nez.UI
 			if (charBuffer.Count < 1) { return; }
 			var oldText = this.text;
 
-			if (hasSelection)
+			if (HasSelection)
 			{
-				cursor = Delete(false);
+				Cursor = Delete(false);
 			}
-			this.text = Insert(cursor, string.Join(string.Empty, charBuffer), this.text);
-			cursor += charBuffer.Count;
+			this.text = Insert(Cursor, string.Join(string.Empty, charBuffer), this.text);
+			Cursor += charBuffer.Count;
 
 			ChangeText(oldText, this.text);
 			UpdateDisplayText();
