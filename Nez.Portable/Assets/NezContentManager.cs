@@ -167,6 +167,7 @@ namespace Nez.Systems
 		/// </summary>
 		public SpriteAtlas LoadSpriteAtlas(string name, bool premultiplyAlpha = false)
 		{
+			name = FullResourceName(name);
 			if (LoadedAssets.TryGetValue(name, out var asset))
 			{
 				if (asset is SpriteAtlas spriteAtlas)
@@ -234,12 +235,17 @@ namespace Nez.Systems
 		public T LoadEffect<T>(string name) where T : Effect
 		{
 			// make sure the effect has the proper root directory
-			if (!name.StartsWith(RootDirectory))
-				name = RootDirectory + "/" + name;
-
-			var bytes = EffectResource.GetFileResourceBytes(name);
+			var bytes = EffectResource.GetFileResourceBytes(FullResourceName(name));
 
 			return LoadEffect<T>(name, bytes);
+		}
+
+		protected string FullResourceName(string name)
+		{
+			if (!name.StartsWith(RootDirectory))
+				name = Path.Combine(RootDirectory, name);
+
+			return name;
 		}
 
 		/// <summary>
