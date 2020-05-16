@@ -418,6 +418,8 @@ namespace Nez
 			return sceneTransition;
 		}
 
+		public static bool CanStartTransition => _instance._sceneTransition == null;
+
 
 		#region Global Managers
 
