@@ -1008,7 +1008,7 @@ namespace Nez.UI
 		/// up: If true, the TextField with the same or next smallest y coordinate is found, else the next highest.
 		/// </summary>
 		/// <param name="up">Up.</param>
-		public void Next(bool up)
+		public virtual void Next(bool up)
 		{
 			var stage = GetStage();
 			if (stage == null)
@@ -1096,7 +1096,7 @@ namespace Nez.UI
 		/// str If null, "" is used
 		/// </summary>
 		/// <param name="str">String.</param>
-		public TextField SetText(string str)
+		public virtual TextField SetText(string str)
 		{
 			if (ShouldIgnoreTextUpdatesWhileFocused && _isFocused)
 				return this;
