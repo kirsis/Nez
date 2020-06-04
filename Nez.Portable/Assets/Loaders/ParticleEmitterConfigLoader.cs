@@ -91,21 +91,22 @@ namespace Nez.ParticleDesigner
 						{
 							stream.CopyTo(mem);
 
-							var bitmap = System.Drawing.Image.FromStream(mem) as System.Drawing.Bitmap;
-							var colors = new Color[bitmap.Width * bitmap.Height];
+							throw new NotImplementedException("Disabled due to referenced library conflicts");
+							//var bitmap = System.Drawing.Image.FromStream(mem) as System.Drawing.Bitmap;
+							//var colors = new Color[bitmap.Width * bitmap.Height];
 
-							for (var x = 0; x < bitmap.Width; x++)
-							{
-								for (var y = 0; y < bitmap.Height; y++)
-								{
-									var drawColor = bitmap.GetPixel(x, y);
-									colors[x + y * bitmap.Width] = new Color(drawColor.R, drawColor.G, drawColor.B, drawColor.A);
-								}
-							}
+							//for (var x = 0; x < bitmap.Width; x++)
+							//{
+							//	for (var y = 0; y < bitmap.Height; y++)
+							//	{
+							//		var drawColor = bitmap.GetPixel(x, y);
+							//		colors[x + y * bitmap.Width] = new Color(drawColor.R, drawColor.G, drawColor.B, drawColor.A);
+							//	}
+							//}
 
-							var texture = new Texture2D(Core.GraphicsDevice, bitmap.Width, bitmap.Height);
-							texture.SetData(colors);
-							config.Sprite = new Textures.Sprite(texture);
+							//var texture = new Texture2D(Core.GraphicsDevice, bitmap.Width, bitmap.Height);
+							//texture.SetData(colors);
+							//config.Sprite = new Textures.Sprite(texture);
 						}
 					}
 				}
