@@ -44,7 +44,7 @@ namespace Nez.UI
 
 		public override void Layout()
 		{
-			var bg = style.Background;
+			var bg = style.Background; 
 			var font = style.Font;
 
 			if (bg != null)
@@ -218,7 +218,7 @@ namespace Nez.UI
 		}
 
 
-		internal override void SetStage(Stage stage)
+		public override void SetStage(Stage stage)
 		{
 			if (stage == null)
 				_selectBoxList.Hide();

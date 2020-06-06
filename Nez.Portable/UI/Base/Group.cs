@@ -74,7 +74,7 @@ namespace Nez.UI
 		/// sets the stage on all children in case the Group is added to the Stage after it is configured
 		/// </summary>
 		/// <param name="stage">Stage.</param>
-		internal override void SetStage(Stage stage)
+		public override void SetStage(Stage stage)
 		{
 			this._stage = stage;
 			for (var i = 0; i < children.Count; i++)

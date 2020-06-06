@@ -64,7 +64,7 @@ namespace Nez.UI
         /// stage May be null if the element or any parent is no longer in a stage
         /// </summary>
         /// <param name="stage">Stage.</param>
-        internal virtual void SetStage(Stage stage) => _stage = stage;
+        public virtual void SetStage(Stage stage) => _stage = stage;
 
         /// <summary>
         /// Returns true if the element's parent is not null
